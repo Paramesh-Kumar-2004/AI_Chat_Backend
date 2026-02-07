@@ -1,56 +1,62 @@
-import { Chat } from "../models/chat.models.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { getGeminiResponse } from "../utils/gemini.js";
+import Chat from "../models/chat.models.js";
+import openai from "../config/openai.js";
 
 
 
 export const sendMessage = asyncHandler(async (req, res) => {
     const { message, chatId } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     let chat;
 
     if (chatId) {
-        chat = await Chat.findOne({ _id: chatId, userId });
-    }
-
-    if (!chat) {
+        chat = await Chat.findOne({ _id: chatId, user: userId });
+        if (!chat) throw new Error("Chat not found");
+    } else {
         chat = await Chat.create({
-            userId,
-            title: message.substring(0, 30),
+            user: userId,
             messages: [],
         });
     }
 
     chat.messages.push({ role: "user", content: message });
 
-    const aiReply = await getGeminiResponse(chat.messages);
+    const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: chat.messages,
+    });
 
-    chat.messages.push({ role: "ai", content: aiReply });
+    const aiReply = completion.choices[0].message.content;
+
+    chat.messages.push({ role: "assistant", content: aiReply });
 
     await chat.save();
 
-    res.json({
+    res.status(200).json({
         chatId: chat._id,
         reply: aiReply,
+        messages: chat.messages,
     });
 });
 
 
 export const getUserChats = asyncHandler(async (req, res) => {
-    const chats = await Chat.find({ userId: req.user._id })
-        .sort({ updatedAt: -1 })
-        .select("_id title updatedAt");
+    const chats = await Chat.find({ user: req.user.id })
+        .select("title updatedAt")
+        .sort({ updatedAt: -1 });
 
     res.json(chats);
 });
 
 
-export const getSingleChat = asyncHandler(async (req, res) => {
+export const getChatById = asyncHandler(async (req, res) => {
     const chat = await Chat.findOne({
         _id: req.params.id,
-        userId: req.user._id,
+        user: req.user.id,
     });
+
+    if (!chat) throw new Error("Chat not found");
 
     res.json(chat);
 });

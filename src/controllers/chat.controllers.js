@@ -1,42 +1,35 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import Chat from "../models/chat.models.js";
-import openai from "../config/openai.js";
+import { getGeminiResponse } from "../utils/gemini.js";
 
 
 
 export const sendMessage = asyncHandler(async (req, res) => {
-    const { message, chatId } = req.body;
-    const userId = req.user.id;
+    const { message } = req.body;
+    const userId = req.user._id;
 
-    let chat;
+    let chat = await Chat.findOne({ user: userId });
 
-    if (chatId) {
-        chat = await Chat.findOne({ _id: chatId, user: userId });
-        if (!chat) throw new Error("Chat not found");
-    } else {
+    if (!chat) {
         chat = await Chat.create({
             user: userId,
             messages: [],
         });
     }
 
+    // Save user message
     chat.messages.push({ role: "user", content: message });
 
-    const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: chat.messages,
-    });
+    // AI response
+    const aiReply = await getGeminiResponse(message);
 
-    const aiReply = completion.choices[0].message.content;
-
-    chat.messages.push({ role: "assistant", content: aiReply });
-
+    chat.messages.push({ role: "ai", content: aiReply });
     await chat.save();
 
     res.status(200).json({
-        chatId: chat._id,
+        success: true,
         reply: aiReply,
-        messages: chat.messages,
+        history: chat.messages,
     });
 });
 

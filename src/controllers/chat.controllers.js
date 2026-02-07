@@ -5,6 +5,8 @@ import { getGeminiResponse } from "../utils/gemini.js";
 
 
 export const sendMessage = asyncHandler(async (req, res) => {
+    console.log("Entered Into Send Message")
+
     const { message } = req.body;
     const userId = req.user._id;
 

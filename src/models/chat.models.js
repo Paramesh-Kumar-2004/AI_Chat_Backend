@@ -1,29 +1,29 @@
 import mongoose from "mongoose";
 
-const messageSchema = new mongoose.Schema(
-    {
-        role: {
-            type: String,
-            enum: ["user", "ai"],
-            required: true,
-        },
-        content: {
-            type: String,
-            required: true,
-        },
+
+
+const messageSchema = new mongoose.Schema({
+    role: {
+        type: String,
+        enum: ["user", "ai"],
+        required: true,
     },
+    content: {
+        type: String,
+        required: true,
+    },
+},
     { timestamps: true }
 );
 
-const chatSchema = new mongoose.Schema(
-    {
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-        messages: [messageSchema],
+const chatSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
     },
+    messages: [messageSchema],
+},
     { timestamps: true }
 );
 

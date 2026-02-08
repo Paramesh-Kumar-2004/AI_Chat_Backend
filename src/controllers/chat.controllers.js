@@ -4,44 +4,72 @@ import { getGeminiResponse } from "../utils/gemini.js";
 
 
 
+export const createChat = asyncHandler(async (req, res) => {
+    console.log("Entered Into Create Chat")
+    const { chatName } = req.body;
+    const chat = await Chat.create({ chatName })
+
+})
+
+
 export const sendMessage = asyncHandler(async (req, res) => {
     console.log("Entered Into Send Message")
 
-    const { message } = req.body;
-    const userId = req.user._id;
+    const { message } = req.body
+    const userId = req.user._id
 
-    let chat = await Chat.findOne({ user: userId });
+    if (!message || !message.trim()) {
+        res.status(400)
+        throw new Error("Message is required")
+    }
+
+    let chat = await Chat.findOne({ user: userId })
 
     if (!chat) {
         chat = await Chat.create({
             user: userId,
-            messages: [],
-        });
+            messages: []
+        })
     }
 
-    // Save user message
-    chat.messages.push({ role: "user", content: message });
+    chat.messages.push({
+        role: "user",
+        content: message.trim()
+    })
 
-    // AI response
-    const aiReply = await getGeminiResponse(message);
+    let aiReply = ""
+    try {
+        aiReply = await getGeminiResponse(message)
+    } catch (error) {
+        console.error("Gemini Error:", error)
+        aiReply = "Sorry, I couldn’t generate a response right now."
+    }
 
-    chat.messages.push({ role: "ai", content: aiReply });
-    await chat.save();
+    chat.messages.push({
+        role: "ai",
+        content: aiReply
+    })
+
+    await chat.save()
 
     res.status(200).json({
         success: true,
-        reply: aiReply,
-        history: chat.messages,
-    });
-});
+        messages: chat.messages
+    })
+})
 
 
 export const getUserChats = asyncHandler(async (req, res) => {
     const chats = await Chat.find({ user: req.user.id })
-        .select("title updatedAt")
+        .select({
+            "messages.role": 1,
+            "messages.content": 1,
+        })
         .sort({ updatedAt: -1 });
 
-    res.json(chats);
+    res.status(200).json({
+        chats,
+    })
 });
 
 

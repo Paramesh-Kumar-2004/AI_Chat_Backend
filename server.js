@@ -25,8 +25,8 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use("/public", express.static("public"))
 app.use(cors({
-    origin: "http://localhost:5173",
-    credentials: true,
+    origin: "https://paramesh-kumar-2004.github.io",
+    credentials: true
 }))
 
 
@@ -42,7 +42,7 @@ app.use("/api/v1/chat", ChatRoutes)
 
 // Health Check
 app.get("/", (req, res) => {
-    res.status(200).send("Tournament Server Running...")
+    res.status(200).send("AI Chat Server Running...")
 })
 
 

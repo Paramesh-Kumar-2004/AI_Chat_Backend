@@ -15,6 +15,7 @@ const registerUser = asyncHandler(async (req, res) => {
         password
     } = req.body;
 
+    console.log(req.body)
     if (!userName || !email || !password) {
         throw new ApiError(404, "Enter All The Fields")
     }

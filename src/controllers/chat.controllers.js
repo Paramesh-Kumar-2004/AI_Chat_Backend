@@ -25,7 +25,7 @@ const createChat = asyncHandler(async (req, res) => {
 
 
 const editChatName = asyncHandler(async (req, res) => {
-    console.log("Entered Into Get Chats")
+    console.log("Entered Into Chat Name Update")
     const { chatId } = req.params
     const { chatName } = req.body
 
@@ -40,7 +40,7 @@ const editChatName = asyncHandler(async (req, res) => {
     }
 
     res.status(200).json({
-        message: "Chats Fetched Successfully",
+        message: "Chat Name Updated Successfully",
         chat
     })
 })
